@@ -1,22 +1,15 @@
-import os
 import random
-
-import numpy as np
 import torch
 from torchvision import datasets
 import torchvision.transforms as T
 from models_ import Encoder, GlobalDiscriminator, LocalDiscriminator, PriorDiscriminator
-from torchvision.datasets.cifar import CIFAR10
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor, ColorJitter
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim import Adam
 from tqdm import tqdm
 from pathlib import Path
 import statistics as stats
 import argparse
-import visdom
 
 # viz = visdom.Visdom()
 
@@ -64,11 +57,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=256, type=int, help='batch_size')
     args = parser.parse_args()
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     batch_size = args.batch_size
 
     imagenet_train_dt = datasets.ImageFolder(
-        './data/ILSVRC2015_64/',
+        # './data/ILSVRC2015_64/',
+        './data/TrackingTargets/',
         T.Compose([
             T.Resize((32, 32)),
             T.ToTensor(),
@@ -82,7 +76,7 @@ if __name__ == '__main__':
     optim = torch.optim.SGD(encoder.parameters(), lr=1e-3, momentum=0.99)
     loss_optim = torch.optim.SGD(loss_fn.parameters(), lr=1e-3, momentum=0.99)
     loss_fn_s = torch.nn.MSELoss()
-    epoch_restart = 76
+    epoch_restart = 82
     root = Path(r'./models/run5/')
 
     if epoch_restart is not None and root is not None:
@@ -157,10 +151,10 @@ if __name__ == '__main__':
             S_loss.append(loss_s.item())
             V_loss.append(loss_supervised.item())
 
-            batch.set_description(str(epoch) + ' Loss: ' + str(stats.mean(train_loss[-20:]))[:7]
-                                  +" DIM: "+str(stats.mean(DIM_loss[-20:]))[:7]
-                                  +" S: "+str(stats.mean(S_loss[-20:]))[:7]
-                                  +" L: "+str(stats.mean(V_loss[-20:]))[:7])
+            batch.set_description(str(epoch) + ' A: ' + str(stats.mean(train_loss[-20:]))[:6]
+                                  +" D: "+str(stats.mean(DIM_loss[-20:]))[:6]
+                                  +" S: "+str(stats.mean(S_loss[-20:]))[:6]
+                                  +" L: "+str(stats.mean(V_loss[-20:]))[:6])
 
             # torch.nn.utils.clip_grad_norm_(encoder.parameters(), 10)
             loss.backward()
